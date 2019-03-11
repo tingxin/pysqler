@@ -51,13 +51,32 @@ class SearchTestCase(unittest.TestCase):
         self.compare_sql(expected, query_str)
 
         q2 = Select()
-        q2.select("city", "education", "AVG(age) as avg_age").\
-            from1("people").\
-            where("age", ">", 10).and_where("job", "like", "%it%").\
-            and_where("birthday", ">", "1988-09-12 12:12:12").\
+        q2.select("city", "education", "AVG(age) as avg_age"). \
+            from1("people"). \
+            where("age", ">", 10).and_where("job", "like", "%it%"). \
+            and_where("birthday", ">", "1988-09-12 12:12:12"). \
             and_where("address", "!=", None). \
             groupby("city", "education").orderby("avg_age", "DESC").limit(10, 8)
         self.compare_sql(expected, str(q2))
+
+    def test_sql_select2(self):
+        def get_sql(*params):
+            query = Select()
+            query.select("max(id) as last_id")
+            query.from1("udp.{0}".format("table"))
+            query.where("resource_type", "in", params)
+            sql = str(query)
+            return sql
+
+        query_str = get_sql("content", "post", "activity")
+        print(query_str)
+
+        expected = """
+        SELECT max(id) as last_id FROM udp.table WHERE resource_type in
+        ('content', 'post', 'activity')
+        """
+
+        self.compare_sql(expected, query_str)
 
     def test_sql_insert1(self):
         query = Insert("people")
