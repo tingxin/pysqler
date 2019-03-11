@@ -59,7 +59,7 @@ def get_sql_str(v):
 
 
 def get_sql_operator(operator, v):
-    if not v:
+    if v is None:
         if operator == "=":
             return "IS"
         elif operator == "!=":
