@@ -79,6 +79,7 @@ class Select(Where):
 
         part = "{0} {1}".format(field, ori)
         self._order.append(part)
+        return self
 
     def limit(self, count, offset=0):
         if offset > 0:

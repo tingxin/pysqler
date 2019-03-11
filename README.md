@@ -40,18 +40,15 @@ you don't need take care of that if if the param is string, number or none ...
 from pysqler import *
  
 query = Select()
-query.select("name", "age", "address", "education", "job", "birthday")
+query.select("city", "education", "AVG(age) as avg_age")
 query.from1("people")
 query.where("age", ">", 10)
 query.and_where("job", "like", "%it%")
 query.and_where("birthday", ">", "1988-09-12 12:12:12")
 query.and_where("address", "!=", None)
-query.groupby("age", "education")
-query.orderby("age", "DESC")
-query.orderby("education", "ASC")
-query.limit(5, 10)
-query_str = str(query)
-print(query_str)
+query.groupby("city", "education")
+query.orderby("avg_age", "DESC")
+query.limit(10, 8)
 
 ```
 output
@@ -63,7 +60,7 @@ AND birthday > "1988-09-12 12:12:12"
 AND address IS NOT null
 GROUP BY city,education 
 ORDER BY avg_age DESC
-LIMIT 5, 10;
+LIMIT 8, 10;
 ```
 
 ### Build Insert SQl

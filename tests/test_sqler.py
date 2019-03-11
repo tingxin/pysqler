@@ -33,7 +33,7 @@ class SearchTestCase(unittest.TestCase):
         query.and_where("address", "!=", None)
         query.groupby("city", "education")
         query.orderby("avg_age", "DESC")
-        query.limit(8, 10)
+        query.limit(10, 8)
 
         expected = """
         SELECT city,education,AVG(age) as avg_age
@@ -49,6 +49,15 @@ class SearchTestCase(unittest.TestCase):
         query_str = str(query)
         print(query_str)
         self.compare_sql(expected, query_str)
+
+        q2 = Select()
+        q2.select("city", "education", "AVG(age) as avg_age").\
+            from1("people").\
+            where("age", ">", 10).and_where("job", "like", "%it%").\
+            and_where("birthday", ">", "1988-09-12 12:12:12").\
+            and_where("address", "!=", None). \
+            groupby("city", "education").orderby("avg_age", "DESC").limit(10, 8)
+        self.compare_sql(expected, str(q2))
 
     def test_sql_insert1(self):
         query = Insert("people")
