@@ -68,12 +68,12 @@ class SearchTestCase(unittest.TestCase):
             sql = str(query)
             return sql
 
-        query_str = get_sql("content", "post", "activity")
+        query_str = get_sql("content")
         print(query_str)
 
         expected = """
         SELECT max(id) as last_id FROM udp.table WHERE resource_type in
-        ('content', 'post', 'activity')
+        ('content')
         """
 
         self.compare_sql(expected, query_str)
@@ -162,7 +162,7 @@ class SearchTestCase(unittest.TestCase):
         print(query_str)
 
         expected = """
-        DELETE FROM people  WHERE age > 15 OR name in (9527,"barry","jack")
+        DELETE FROM people  WHERE age > 15 OR name in (9527,'barry','jack')
         """
         self.compare_sql(expected, query_str)
 
