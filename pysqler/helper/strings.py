@@ -48,27 +48,33 @@ def get_sql_str(v):
     elif isinstance(v, str):
         part = filter_sql(v)
         part = "\"{0}\"".format(part)
+    elif isinstance(v, tuple):
+        return handel_tuple(v)
     elif isinstance(v, list):
-        cache = list()
-
-        for item in v:
-            if isinstance(item, str):
-                part = filter_sql(item)
-                part = "\"{0}\"".format(part)
-                cache.append(part)
-            else:
-                cache.append(str(item))
-        t = ",".join(cache)
-        return "({0})".format(t)
+        t = tuple(v)
+        return handel_tuple(t)
     else:
         part = str(v)
     return part
 
 
 def get_sql_operator(operator, v):
-    if not v:
+    if v is None:
         if operator == "=":
             return "IS"
         elif operator == "!=":
             return "IS NOT"
     return operator
+
+
+def handel_tuple(v):
+    if len(v) == 1:
+        item = v[0]
+        if isinstance(item, str):
+            part = filter_sql(item)
+            part = "\'{0}\'".format(part)
+        else:
+            part = str(item)
+        return "({0})".format(part)
+    else:
+        return str(v)

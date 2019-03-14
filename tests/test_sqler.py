@@ -33,7 +33,7 @@ class SearchTestCase(unittest.TestCase):
         query.and_where("address", "!=", None)
         query.groupby("city", "education")
         query.orderby("avg_age", "DESC")
-        query.limit(8, 10)
+        query.limit(10, 8)
 
         expected = """
         SELECT city,education,AVG(age) as avg_age
@@ -43,6 +43,67 @@ class SearchTestCase(unittest.TestCase):
         AND address IS NOT null
         GROUP BY city,education 
         ORDER BY avg_age DESC
+        LIMIT 8,10
+        """
+
+        query_str = str(query)
+        print(query_str)
+        self.compare_sql(expected, query_str)
+
+        q2 = Select()
+        q2.select("city", "education", "AVG(age) as avg_age"). \
+            from1("people"). \
+            where("age", ">", 10).and_where("job", "like", "%it%"). \
+            and_where("birthday", ">", "1988-09-12 12:12:12"). \
+            and_where("address", "!=", None). \
+            groupby("city", "education").orderby("avg_age", "DESC").limit(10, 8)
+        self.compare_sql(expected, str(q2))
+
+    def test_sql_select2(self):
+        def get_sql(*params):
+            query = Select()
+            query.select("max(id) as last_id")
+            query.from1("udp.{0}".format("table"))
+            query.where("resource_type", "in", params)
+            sql = str(query)
+            return sql
+
+        query_str = get_sql("content")
+        print(query_str)
+
+        expected = """
+        SELECT max(id) as last_id FROM udp.table WHERE resource_type in
+        ('content')
+        """
+
+        self.compare_sql(expected, query_str)
+
+    def test_sql_join(self):
+        query = Select()
+        query.select("city", "education", "AVG(age) as avg_age")
+        query.from1("people")
+        query.where("age", ">", 10)
+        query.join("orders", "orders.account = people.id",
+                   "orders.time = people.birthday")
+        query.and_where("job", "like", "%it%")
+        query.and_where("birthday", ">", "1988-09-12 12:12:12")
+        query.and_where("address", "!=", None)
+
+        query.left_join("vip", "vip.account = people.id")
+
+        query.groupby("city", "education")
+        query.orderby("avg_age", "DESC")
+        query.limit(10, 8)
+
+        expected = """
+        SELECT city,education,AVG(age) as avg_age
+        FROM people
+        INNER JOIN orders
+        ON orders.account = people.id and orders.time = people.birthday
+        LEFT JOIN vip ON vip.account = people.id
+        WHERE age > 10 AND job like "％it％" AND birthday > "1988-09-12 12:12:12"
+        AND address IS NOT null
+        GROUP BY city,education ORDER BY avg_age DESC
         LIMIT 8,10
         """
 
@@ -134,7 +195,7 @@ class SearchTestCase(unittest.TestCase):
         print(query_str)
 
         expected = """
-        DELETE FROM people  WHERE age > 15 OR name in (9527,"barry","jack")
+        DELETE FROM people  WHERE age > 15 OR name in (9527,'barry','jack')
         """
         self.compare_sql(expected, query_str)
 
