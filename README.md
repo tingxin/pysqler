@@ -43,9 +43,14 @@ query = Select()
 query.select("city", "education", "AVG(age) as avg_age")
 query.from1("people")
 query.where("age", ">", 10)
+query.join("orders", "orders.account = people.id",
+           "orders.time = people.birthday")
 query.and_where("job", "like", "%it%")
 query.and_where("birthday", ">", "1988-09-12 12:12:12")
 query.and_where("address", "!=", None)
+
+query.left_join("vip", "vip.account = people.id")
+
 query.groupby("city", "education")
 query.orderby("avg_age", "DESC")
 query.limit(10, 8)
@@ -55,12 +60,13 @@ output
 ```sql
 SELECT city,education,AVG(age) as avg_age
 FROM people
-WHERE age > 10 AND job like "％it％"
-AND birthday > "1988-09-12 12:12:12"
+INNER JOIN orders
+ON orders.account = people.id and orders.time = people.birthday
+LEFT JOIN vip ON vip.account = people.id
+WHERE age > 10 AND job like "％it％" AND birthday > "1988-09-12 12:12:12"
 AND address IS NOT null
-GROUP BY city,education 
-ORDER BY avg_age DESC
-LIMIT 8, 10;
+GROUP BY city,education ORDER BY avg_age DESC
+LIMIT 8,10;
 ```
 
 ### Build Insert SQl

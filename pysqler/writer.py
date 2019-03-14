@@ -14,25 +14,31 @@ class Select(Where):
     """
     Build a select sql
     eg:
-    >> query = sqler.Select()
-    >> query.select("city", "education",  "AVG(age) as avg_age")
+    >> query = Select()
+    >> query.select("city", "education", "AVG(age) as avg_age")
     >> query.from1("people")
     >> query.where("age", ">", 10)
+    >> query.join("orders", "orders.account = people.id",
+    >>            "orders.time = people.birthday")
     >> query.and_where("job", "like", "%it%")
     >> query.and_where("birthday", ">", "1988-09-12 12:12:12")
     >> query.and_where("address", "!=", None)
+
+    >> query.left_join("vip", "vip.account = people.id")
+
     >> query.groupby("city", "education")
     >> query.orderby("avg_age", "DESC")
-    >> query.limit(8,10)
+    >> query.limit(10, 8)
 
     output:
     >> SELECT city,education,AVG(age) as avg_age
     >> FROM people
-    >> WHERE age > 10 AND job like "％it％"
-    >> AND birthday > "1988-09-12 12:12:12"
+    >> INNER JOIN orders
+    >> ON orders.account = people.id and orders.time = people.birthday
+    >> LEFT JOIN vip ON vip.account = people.id
+    >> WHERE age > 10 AND job like "％it％" AND birthday > "1988-09-12 12:12:12"
     >> AND address IS NOT null
-    >> GROUP BY city,education
-    >> ORDER BY avg_age DESC
+    >> GROUP BY city,education ORDER BY avg_age DESC
     >> LIMIT 8,10
     """
 
@@ -43,16 +49,14 @@ class Select(Where):
         self._group = None
         self._order = None
         self._limit = None
+        self._join = None
         self._table_index = 97
 
     def select(self, *fields):
-        if not self._select:
-            self._select = list()
-
-        self._select.extend(fields)
-        return self
-
-    def insert(self, *fields):
+        """
+        :param fields: the field names in tables
+        :return: self
+        """
         if not self._select:
             self._select = list()
 
@@ -60,20 +64,90 @@ class Select(Where):
         return self
 
     def from1(self, table):
+        """
+        :param table: table name you want to select
+        :return: self
+        """
         if not self._from:
             self._from = list()
 
         self._from.append(table)
         return self
 
+    def join_by_type(self, t, table, *conditions):
+        if self._join is None:
+            self._join = list()
+        head = "{0} JOIN {1} ON".format(t, table)
+        body = " and ".join(conditions)
+        self._join.append(head)
+        self._join.append(body)
+
+    def join(self, table, *conditions):
+        """
+        INNER JOIN another table on conditions
+        eg:
+        >> query.join("orders", "orders.account = people.id",
+               "orders.time = people.birthday")
+        :param table: table name
+        :param conditions: join conditions, eg: orders.time = people.birthday
+        :return: self
+        """
+        self.join_by_type("INNER", table, *conditions)
+
+    def left_join(self, table, *conditions):
+        """
+        LEFT JOIN another table on conditions
+        eg:
+        >> query.left_join("orders", "orders.account = people.id",
+               "orders.time = people.birthday")
+        :param table: table name
+        :param conditions: join conditions, eg: orders.time = people.birthday
+        :return: self
+        """
+        self.join_by_type("LEFT", table, *conditions)
+
+    def right_join(self, table, *conditions):
+        """
+        RIGHT JOIN another table on conditions
+        eg:
+        >> query.right_join("orders", "orders.account = people.id",
+               "orders.time = people.birthday")
+        :param table: table name
+        :param conditions: join conditions, eg: orders.time = people.birthday
+        :return: self
+        """
+        self.join_by_type("RIGHT", table, *conditions)
+
+    def full_join(self, table, *conditions):
+        """
+        FULL JOIN another table on conditions
+        eg:
+        >> query.full_join("orders", "orders.account = people.id",
+               "orders.time = people.birthday")
+        :param table: table name
+        :param conditions: join conditions, eg: orders.time = people.birthday
+        :return: self
+        """
+        self.join_by_type("FULL", table, *conditions)
+
     def groupby(self, *fields):
+        """
+        :param fields: the field names in tables
+        :return: se
+        """
         if not self._group:
             self._group = list()
 
         self._group.extend(fields)
         return self
 
-    def orderby(self, field, ori):
+    def orderby(self, field, ori="DESC"):
+        """
+
+        :param field: field order by
+        :param ori: DESC or ASC, by default is DESC
+        :return:
+        """
         if not self._order:
             self._order = list()
 
@@ -82,6 +156,11 @@ class Select(Where):
         return self
 
     def limit(self, count, offset=0):
+        """
+        :param count: the row count your query return
+        :param offset: from which row you want to return
+        :return: self
+        """
         if offset > 0:
             self._limit = "LIMIT {0},{1}".format(offset, count)
         else:
@@ -98,6 +177,10 @@ class Select(Where):
             from_source = ",".join(self._from)
             u.append("FROM")
             u.append(from_source)
+
+        if self._join:
+            join = " ".join(self._join)
+            u.append(join)
 
         if self._where:
             where = " ".join(self._where)
@@ -150,11 +233,15 @@ class Insert:
 
     eg2:
     >> query = sqler.Insert("people")
-    >> query.add_columns("name", "age", "salary", "address", "education", "job", "birthday")
-    >> query.add_row("barry", 19, 3100, "shanghai", "bachelor", None,"2010-01-01")
-    >> query.add_row("jack", 24, 3600, "shanghai", "bachelor", "engineer","2010-01-09")
+    >> query.add_columns("name", "age", "salary", "address",
+     "education", "job", "birthday")
+    >> query.add_row("barry", 19, 3100, "shanghai", "bachelor",
+     None,"2010-01-01")
+    >> query.add_row("jack", 24, 3600, "shanghai", "bachelor",
+    "engineer","2010-01-09")
     >> query.add_row("bob", 27, 8600, None, "bachelor", "engineer","1990-01-09")
-    >> query.add_row("edwin", 30, 10600, "beijing", "bachelor", "engineer","1987-01-09")
+    >> query.add_row("edwin", 30, 10600, "beijing", "bachelor",
+    "engineer","1987-01-09")
     >> query_str = str(query)
     >> print(query_str)
 
