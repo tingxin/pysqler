@@ -35,7 +35,6 @@ def filter_sql(sql):
     rep["*"] = "＊"
     rep["&"] = "＆"
     rep["#"] = "＃"
-    rep["%"] = "％"
     rep["$"] = "￥"
 
     sql = replace(sql, rep)
