@@ -38,7 +38,7 @@ class SearchTestCase(unittest.TestCase):
         expected = """
         SELECT city,education,AVG(age) as avg_age
         FROM people
-        WHERE age > 10 AND job like "％it％"
+        WHERE age > 10 AND job like "%it%"
         AND birthday > "1988-09-12 12:12:12"
         AND address IS NOT null
         GROUP BY city,education 
@@ -101,7 +101,7 @@ class SearchTestCase(unittest.TestCase):
         INNER JOIN orders
         ON orders.account = people.id and orders.time = people.birthday
         LEFT JOIN vip ON vip.account = people.id
-        WHERE age > 10 AND job like "％it％" AND birthday > "1988-09-12 12:12:12"
+        WHERE age > 10 AND job like "%it%" AND birthday > "1988-09-12 12:12:12"
         AND address IS NOT null
         GROUP BY city,education ORDER BY avg_age DESC
         LIMIT 8,10
