@@ -29,7 +29,6 @@ def filter_sql(sql):
     rep[">"] = "＞"
     rep["("] = "（"
     rep[")"] = "）"
-    rep["@"] = "＠"
     rep["="] = "＝"
     rep["+"] = "＋"
     rep["*"] = "＊"

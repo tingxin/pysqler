@@ -88,6 +88,7 @@ class SearchTestCase(unittest.TestCase):
         query.and_where("job", "like", "%it%")
         query.and_where("birthday", ">", "1988-09-12 12:12:12")
         query.and_where("address", "!=", None)
+        query.and_where("is_employee", "=", True)
 
         query.left_join("vip", "vip.account = people.id")
 
@@ -102,7 +103,7 @@ class SearchTestCase(unittest.TestCase):
         ON orders.account = people.id and orders.time = people.birthday
         LEFT JOIN vip ON vip.account = people.id
         WHERE age > 10 AND job like "%it%" AND birthday > "1988-09-12 12:12:12"
-        AND address IS NOT null
+        AND address IS NOT null AND is_employee = True
         GROUP BY city,education ORDER BY avg_age DESC
         LIMIT 8,10
         """
