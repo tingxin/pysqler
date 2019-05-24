@@ -8,6 +8,46 @@
 
 import re
 
+str_rep = dict()
+operators = dict()
+
+str_rep["'"] = "‘"
+str_rep['"'] = "‘"
+str_rep[";"] = "；"
+str_rep[","] = "，"
+str_rep["?"] = "？"
+str_rep["<"] = "＜"
+str_rep[">"] = "＞"
+str_rep["("] = "（"
+str_rep[")"] = "）"
+str_rep["="] = "＝"
+str_rep["+"] = "＋"
+str_rep["*"] = "＊"
+str_rep["&"] = "＆"
+str_rep["#"] = "＃"
+str_rep["$"] = "￥"
+str_rep["%"] = "%%"
+
+operators[">"] = True
+operators["<"] = True
+operators[">="] = True
+operators["<="] = True
+operators["!"] = True
+operators["!>"] = True
+operators["LIKE"] = True
+operators["like"] = True
+
+operators["="] = True
+operators["!="] = True
+operators["IS"] = True
+operators["IS NOT"] = True
+operators["is"] = True
+operators["is not"] = True
+operators["in"] = True
+operators["IN"] = True
+operators["not in"] = True
+operators["NOT IN"] = True
+
 
 def replace(str_content, rep):
     rep = dict((re.escape(k), v) for k, v in rep.items())
@@ -20,23 +60,7 @@ def filter_sql(sql):
     if sql == "":
         return sql
 
-    rep = dict()
-    rep["'"] = "‘"
-    rep[";"] = "；"
-    rep[","] = "，"
-    rep["?"] = "？"
-    rep["<"] = "＜"
-    rep[">"] = "＞"
-    rep["("] = "（"
-    rep[")"] = "）"
-    rep["="] = "＝"
-    rep["+"] = "＋"
-    rep["*"] = "＊"
-    rep["&"] = "＆"
-    rep["#"] = "＃"
-    rep["$"] = "￥"
-
-    sql = replace(sql, rep)
+    sql = replace(sql, str_rep)
     return sql
 
 
@@ -57,6 +81,9 @@ def get_sql_str(v):
 
 
 def get_sql_operator(operator, v):
+    if operator not in operators:
+        raise ValueError("PySqler does not support operator {0}", operator)
+
     if v is None:
         if operator == "=":
             return "IS"

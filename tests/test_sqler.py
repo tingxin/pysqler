@@ -38,7 +38,7 @@ class SearchTestCase(unittest.TestCase):
         expected = """
         SELECT city,education,AVG(age) as avg_age
         FROM people
-        WHERE age > 10 AND job like "%it%"
+        WHERE age > 10 AND job like "%%it%%"
         AND birthday > "1988-09-12 12:12:12"
         AND address IS NOT null
         GROUP BY city,education 
@@ -102,7 +102,7 @@ class SearchTestCase(unittest.TestCase):
         INNER JOIN orders
         ON orders.account = people.id and orders.time = people.birthday
         LEFT JOIN vip ON vip.account = people.id
-        WHERE age > 10 AND job like "%it%" AND birthday > "1988-09-12 12:12:12"
+        WHERE age > 10 AND job like "%%it%%" AND birthday > "1988-09-12 12:12:12"
         AND address IS NOT null AND is_employee = True
         GROUP BY city,education ORDER BY avg_age DESC
         LIMIT 8,10
@@ -169,6 +169,34 @@ class SearchTestCase(unittest.TestCase):
         ( "edwin",30,10600,"beijing","bachelor","engineer","1987-01-09" )
         
         """
+        self.compare_sql(expected, query_str)
+
+    def test_sql_insert3(self):
+        query = Insert("people")
+
+        query.add_row("barry", 19, 3100, "shanghai", "bachelor", None,
+                      "2010-01-01")
+
+        query.add_row("jack", 24, 3600, "shanghai", "bachelor", "engineer",
+                      "2010-01-09")
+
+        query.add_row("bob", 27, 8600, None, "bachelor", "engineer",
+                      "1990-01-09")
+
+        query.add_row("edwin", 30, 10600, "beijing", "bachelor", "engineer",
+                      "1987-01-09")
+
+        query_str = str(query)
+        print(query_str)
+
+        expected = """
+           INSERT INTO people
+           VALUES( "barry",19,3100,"shanghai","bachelor",null,"2010-01-01" ),
+           ( "jack",24,3600,"shanghai","bachelor","engineer","2010-01-09" ),
+           ( "bob",27,8600,null,"bachelor","engineer","1990-01-09" ),
+           ( "edwin",30,10600,"beijing","bachelor","engineer","1987-01-09" )
+
+           """
         self.compare_sql(expected, query_str)
 
     def test_sql_update1(self):

@@ -63,6 +63,17 @@ class Select(Where):
         self._select.extend(fields)
         return self
 
+    def choice(self, field):
+        """
+        :param field: the field names in tables
+        :return: self
+        """
+        if not self._select:
+            self._select = list()
+
+        self._select.append(field)
+        return self
+
     def from1(self, table):
         """
         :param table: table name you want to select
@@ -262,6 +273,7 @@ class Insert:
 
         self._pairs = list()
         self._columns = None
+        self.last_row_item_count = None
 
     def put(self, column_name, column_value, value_on_duplicated=None):
         """
@@ -308,15 +320,17 @@ class Insert:
             msg = "Don't use put and add_row together in one sql"
             raise ValueError(msg)
 
-        if not self._columns:
-            msg = "should set columns first"
-            raise ValueError(msg)
-
-        if len(values) != len(self._columns):
+        if self._columns and len(values) != len(self._columns):
             msg = "values count must mach columns count"
             raise ValueError(msg)
 
         self._use_status = 2
+        count = len(values)
+        if self.last_row_item_count and self.last_row_item_count != count:
+            msg = "values count does not mach last time"
+            raise ValueError(msg)
+
+        self.last_row_item_count = count
 
         parts = [strings.get_sql_str(value) for value in values]
         self._pairs.append(parts)
@@ -334,9 +348,10 @@ class Insert:
         return ""
 
     def _str_multiple_insert(self):
-        self._cache.append("(")
-        self._cache.append(",".join(self._columns))
-        self._cache.append(")")
+        if self._columns:
+            self._cache.append("(")
+            self._cache.append(",".join(self._columns))
+            self._cache.append(")")
         self._cache.append("VALUES")
         values = list()
         for row in self._pairs:
