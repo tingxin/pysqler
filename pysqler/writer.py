@@ -471,7 +471,7 @@ class Update(Where):
         values = [f.format(item[0], item[1]) for item in self._pairs]
         self._cache.append(",".join(values))
 
-        where = self.where_str()
+        where = super(Where, self).__str__()
         if where:
             self._cache.append(where)
 
@@ -498,7 +498,7 @@ class Delete(Where):
     def __str__(self):
         cache = ["DELETE FROM {0} ".format(self.table)]
 
-        where = self.where_str()
+        where = super(Where, self).__str__()
         if where:
             cache.append(where)
 
