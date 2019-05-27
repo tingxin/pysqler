@@ -104,6 +104,7 @@ class SearchTestCase(unittest.TestCase):
         query.or_where("c.visibility", "in", ['banned', 'invisible'])
 
         query.groupby("dt", "vi")
+        query.having("sum_images", ">", 100)
         query.orderby("c.id")
 
         expected = """
@@ -114,7 +115,9 @@ class SearchTestCase(unittest.TestCase):
         and (c.like_count > 100 
         or c.like_count < 10)) 
         or c.visibility in ('banned','invisible')  
-        group by dt, vi order by c.id desc
+        group by dt, vi
+        having sum_images > 100
+        order by c.id desc
         """
 
         query_str = str(query)

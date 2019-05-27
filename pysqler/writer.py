@@ -6,6 +6,7 @@
 # Created: 2019/2/24
 
 
+from .helper import Filter
 from .helper import Where
 from .helper import strings
 
@@ -51,6 +52,7 @@ class Select(Where):
         self._limit = None
         self._join = None
         self._table_index = 97
+        self._having_filter = None
 
     def select(self, *fields):
         """
@@ -152,6 +154,36 @@ class Select(Where):
         self._group.extend(fields)
         return self
 
+    def having(self, key, operator, value):
+        if not self._having_filter:
+            self._having_filter = Filter("Having")
+
+        self._having_filter.add(key, operator, value)
+        return self
+
+    def and_having(self, key, operator, value):
+        self.having(key, operator, value)
+        return self
+
+    def or_having(self, key, operator, value):
+        if not self._having_filter:
+            self._having_filter = Filter("Having")
+
+        self._having_filter.add_or(key, operator, value)
+        return self
+
+    def begin_having_group(self):
+        if not self._having_filter:
+            self._having_filter = Filter("Having")
+
+        self._having_filter.begin_group()
+
+    def end_having_group(self):
+        if not self._having_filter:
+            self._having_filter = Filter("Having")
+
+        self._having_filter.end_group()
+
     def orderby(self, field, ori="DESC"):
         """
 
@@ -193,14 +225,18 @@ class Select(Where):
             join = " ".join(self._join)
             u.append(join)
 
-        if self._where:
-            where = " ".join(self._where)
+        where = super(Where, self).__str__()
+        if where:
             u.append(where)
 
         if self._group:
             gr = ",".join(self._group)
             u.append("GROUP BY")
             u.append(gr)
+
+        if self._having_filter:
+            having = str(self._having_filter)
+            u.append(having)
 
         if self._order:
             gr = ",".join(self._order)
@@ -435,9 +471,9 @@ class Update(Where):
         values = [f.format(item[0], item[1]) for item in self._pairs]
         self._cache.append(",".join(values))
 
-        if self._where:
-            condition = " ".join(self._where)
-            self._cache.append(condition)
+        where = self.where_str()
+        if where:
+            self._cache.append(where)
 
         return " ".join(self._cache)
 
@@ -462,9 +498,9 @@ class Delete(Where):
     def __str__(self):
         cache = ["DELETE FROM {0} ".format(self.table)]
 
-        if self._where:
-            condition = " ".join(self._where)
-            cache.append(condition)
+        where = self.where_str()
+        if where:
+            cache.append(where)
 
         return " ".join(cache)
 
