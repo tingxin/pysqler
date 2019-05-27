@@ -86,17 +86,36 @@ class SearchTestCase(unittest.TestCase):
         query.choice("c.visibility as vi")
         query.choice("SUM(c.image_count) as sum_images")
         query.from1("comment as c")
+
+        query.begin_group()
+
+        query.begin_group()
         query.where("c.id", ">", 441690)
-        query.where("c.like_count", ">", 3)
+        query.or_where("c.id", "<", 241690)
+        query.end_group()
+
+        query.begin_group()
+        query.where("c.like_count", ">", 100)
+        query.or_where("c.like_count", "<", 10)
+        query.end_group()
+
+        query.end_group()
+
+        query.or_where("c.visibility", "in", ['banned', 'invisible'])
+
         query.groupby("dt", "vi")
         query.orderby("c.id")
 
         expected = """
-         select DATE_FORMAT(c.create_time, '%Y-%m') as dt, c.visibility as vi, 
-         SUM(c.image_count) as sum_images from 
-         comment as c where c.id > 441690 and c.like_count > 3 group by dt, vi 
-         order by c.id desc
-         """
+        select DATE_FORMAT(c.create_time, '%Y-%m') as dt, c.visibility as vi, 
+        SUM(c.image_count) as sum_images 
+        from   comment as c 
+        where ((c.id > 441690 or c.id < 241690) 
+        and (c.like_count > 100 
+        or c.like_count < 10)) 
+        or c.visibility in ('banned','invisible')  
+        group by dt, vi order by c.id desc
+        """
 
         query_str = str(query)
         print(query_str)
