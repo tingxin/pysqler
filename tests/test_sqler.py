@@ -78,6 +78,30 @@ class SearchTestCase(unittest.TestCase):
 
         self.compare_sql(expected, query_str)
 
+    def test_sql_select3(self):
+        query = Select()
+        df = "DATE_FORMAT({0}.{1},'{2}') as dt"
+        create_time = df.format("c", "create_time", "%Y-%m")
+        query.choice(create_time)
+        query.choice("c.visibility as vi")
+        query.choice("SUM(c.image_count) as sum_images")
+        query.from1("comment as c")
+        query.where("c.id", ">", 441690)
+        query.where("c.like_count", ">", 3)
+        query.groupby("dt", "vi")
+        query.orderby("c.id")
+
+        expected = """
+         select DATE_FORMAT(c.create_time, '%Y-%m') as dt, c.visibility as vi, 
+         SUM(c.image_count) as sum_images from 
+         comment as c where c.id > 441690 and c.like_count > 3 group by dt, vi 
+         order by c.id desc
+         """
+
+        query_str = str(query)
+        print(query_str)
+        self.compare_sql(expected, query_str)
+
     def test_sql_join(self):
         query = Select()
         query.select("city", "education", "AVG(age) as avg_age")

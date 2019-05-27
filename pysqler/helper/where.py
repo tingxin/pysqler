@@ -15,13 +15,18 @@ class Where:
     def where(self, key, operator, value):
         part = self._g_where_value(value)
         operator = strings.get_sql_operator(operator, value)
-        self._where.append("WHERE {0} {1} {2}".format(key, operator, part))
+        if self._where:
+            self._where.append("AND {0} {1} {2}".format(key, operator, part))
+        else:
+            self._where.append("WHERE {0} {1} {2}".format(key, operator, part))
+
         return self
 
     def and_where(self, key, operator, value):
         part = self._g_where_value(value)
         operator = strings.get_sql_operator(operator, value)
         self._where.append("AND {0} {1} {2}".format(key, operator, part))
+
         return self
 
     def or_where(self, key, operator, value):
