@@ -218,10 +218,12 @@ class SearchTestCase(unittest.TestCase):
         self.compare_sql(expected, query_str)
 
     def test_sql_insert3(self):
+        from datetime import date
         query = Insert("people")
+        day = date(2010, 1, 1)
 
         query.add_row("barry", 19, 3100, "shanghai", "bachelor", None,
-                      "2010-01-01")
+                      day)
 
         query.add_row("jack", 24, 3600, "shanghai", "bachelor", "engineer",
                       "2010-01-09")

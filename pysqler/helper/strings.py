@@ -7,6 +7,8 @@
 
 
 import re
+from datetime import datetime
+from datetime import date
 
 str_rep = dict()
 operators = dict()
@@ -70,6 +72,10 @@ def get_sql_str(v):
     elif isinstance(v, str):
         part = filter_sql(v)
         part = "\"{0}\"".format(part)
+    elif isinstance(v, int) or isinstance(v, float):
+        part = str(v)
+    elif isinstance(v, datetime) or isinstance(v, date):
+        part = "\"{0}\"".format(v)
     elif isinstance(v, tuple):
         return handel_tuple(v)
     elif isinstance(v, list):
