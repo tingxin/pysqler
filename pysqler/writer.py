@@ -9,6 +9,7 @@
 from .helper import Filter
 from .helper import Where
 from .helper import strings
+from .helper.into import InTo
 
 
 class Select(Where):
@@ -249,7 +250,7 @@ class Select(Where):
         return " ".join(u)
 
 
-class Insert:
+class Insert(InTo):
     """
     Build a select sql
     eg:
@@ -301,137 +302,62 @@ class Insert:
     """
 
     def __init__(self, table):
-        self._cache = ["INSERT INTO {0}".format(table)]
-        # 0 -> init status
-        # 1 -> use put
-        # 2 -> use add row
-        self._use_status = 0
+        super(Insert, self).__init__("INSERT", table)
 
-        self._pairs = list()
-        self._columns = None
-        self.last_row_item_count = None
 
-    def put(self, column_name, column_value, value_on_duplicated=None):
-        """
-        put data when insert one row
-        :param column_name: column name
-        :param column_value: column value
-        :param value_on_duplicated:
-        :return: self
-        """
-        if self._use_status == 2:
-            msg = "Don't use put and add_columns together in one sql"
-            raise ValueError(msg)
-        self._use_status = 1
-        part = strings.get_sql_str(column_value)
-        pair = (column_name, part, value_on_duplicated)
-        self._pairs.append(pair)
+class Replace(InTo):
+    """
+    Build a select sql
+    eg:
+    >> query = sqler.Replace("people")
+    >> query.put("name", "jack")
+    >> query.put("age", 10, value_on_duplicated=20)
 
-        return self
+    >> express = sqler.Expression()
+    >> express.field("salary")
+    >> express.operator("+")
+    >> express.value(200)
+    >> express.operator("*")
+    >> express.value(3.5)
 
-    def add_columns(self, *column_names):
-        """
-        set columns for on insert sql, we used it to insert multiple rows
-        in one sql
-        :param column_names:
-        :return: self
-        """
-        if self._use_status == 1:
-            msg = "Don't use put and add_columns together in one sql"
-            raise ValueError(msg)
+    >> query.put("salary", 5000, value_on_duplicated=express)
+    >> query.put("address", "shanghai", value_on_duplicated="china")
+    >> query.put("education", "bachelor")
+    >> query.put("job", "engineer")
+    >> query.put("birthday", "2000-01-01")
+    >> query_str = str(query)
+    >> print(query_str)
 
-        if not self._columns:
-            self._use_status = 2
-            self._columns = column_names
-        else:
-            raise ValueError("add_columns just can be used once for one insert")
+    output:
+    >> REPLACE INTO people ( name,age,salary,address,education,job,birthday )
+    >> VALUES( "jack",10,5000,"shanghai","bachelor","engineer","2000-01-01" )
+    >> ON DUPLICATE KEY UPDATE age = 20,salary = salary + 200 * 3.5,
+    >> address = "china"
 
-    def add_row(self, *values):
-        """
-        add row data when insert multiple rows once
-        :param values: column values
-        :return: self
-        """
-        if self._use_status == 1:
-            msg = "Don't use put and add_row together in one sql"
-            raise ValueError(msg)
+    eg2:
+    >> query = sqler.Replace("people")
+    >> query.add_columns("name", "age", "salary", "address",
+     "education", "job", "birthday")
+    >> query.add_row("barry", 19, 3100, "shanghai", "bachelor",
+     None,"2010-01-01")
+    >> query.add_row("jack", 24, 3600, "shanghai", "bachelor",
+    "engineer","2010-01-09")
+    >> query.add_row("bob", 27, 8600, None, "bachelor", "engineer","1990-01-09")
+    >> query.add_row("edwin", 30, 10600, "beijing", "bachelor",
+    "engineer","1987-01-09")
+    >> query_str = str(query)
+    >> print(query_str)
 
-        if self._columns and len(values) != len(self._columns):
-            msg = "values count must mach columns count"
-            raise ValueError(msg)
+    output:
+    >> REPLACE INTO people ( name,age,salary,address,education,job,birthday )
+    >> VALUES( "barry",19,3100,"shanghai","bachelor",null,"2010-01-01" ),
+    >> ( "jack",24,3600,"shanghai","bachelor","engineer","2010-01-09" ),
+    >> ( "bob",27,8600,null,"bachelor","engineer","1990-01-09" ),
+    >> ( "edwin",30,10600,"beijing","bachelor","engineer","1987-01-09" )
+    """
 
-        self._use_status = 2
-        count = len(values)
-        if self.last_row_item_count and self.last_row_item_count != count:
-            msg = "values count does not mach last time"
-            raise ValueError(msg)
-
-        self.last_row_item_count = count
-
-        parts = [strings.get_sql_str(value) for value in values]
-        self._pairs.append(parts)
-
-        return self
-
-    def __str__(self):
-
-        if self._use_status == 1:
-            return self._str_simple_insert()
-
-        if self._use_status == 2:
-            return self._str_multiple_insert()
-
-        return ""
-
-    def _str_multiple_insert(self):
-        if self._columns:
-            self._cache.append("(")
-            self._cache.append(",".join(self._columns))
-            self._cache.append(")")
-        self._cache.append("VALUES")
-        values = list()
-        for row in self._pairs:
-            t = ",".join(row)
-            p = "({0})".format(t)
-            values.append(p)
-
-        values_str = ",".join(values)
-        self._cache.append(values_str)
-        return " ".join(self._cache)
-
-    def _str_simple_insert(self):
-        columns = [item[0] for item in self._pairs]
-        self._cache.append("(")
-        self._cache.append(",".join(columns))
-        self._cache.append(")")
-
-        values = [item[1] for item in self._pairs]
-        self._cache.append("VALUES(")
-        t = ",".join(values)
-        self._cache.append(t)
-        self._cache.append(")")
-
-        f = "{0} = {1}"
-        dup_groups = [p for p in self._pairs if p[2]]
-        dup_groups_values = list()
-        for item in dup_groups:
-            dup_value = item[2]
-            if isinstance(dup_value, Expression):
-                v = str(dup_value)
-                dup_groups_values.append((item[0], v))
-            elif isinstance(dup_value, str):
-                part = "\"{0}\"".format(dup_value)
-                dup_groups_values.append((item[0], part))
-            else:
-                dup_groups_values.append((item[0], dup_value))
-
-        dup_pairs = [f.format(item[0], item[1]) for item in dup_groups_values]
-
-        if dup_pairs:
-            self._cache.append("ON DUPLICATE KEY UPDATE")
-            self._cache.append(",".join(dup_pairs))
-
-        return " ".join(self._cache)
+    def __init__(self, table):
+        super(Replace, self).__init__("REPLACE", table)
 
 
 class Update(Where):
@@ -503,21 +429,3 @@ class Delete(Where):
             cache.append(where)
 
         return " ".join(cache)
-
-
-class Expression:
-    def __init__(self):
-        self.cache = list()
-
-    def field(self, v):
-        self.cache.append(v)
-
-    def operator(self, v):
-        self.cache.append(v)
-
-    def value(self, v):
-        v = strings.get_sql_str(v)
-        self.cache.append(v)
-
-    def __str__(self):
-        return " ".join(self.cache)

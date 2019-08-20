@@ -245,6 +245,34 @@ class SearchTestCase(unittest.TestCase):
            """
         self.compare_sql(expected, query_str)
 
+    def test_sql_replace(self):
+        query = Replace("people")
+
+        query.add_row("barry", 19, 3100, "shanghai", "bachelor", None,
+                      "2010-01-01")
+
+        query.add_row("jack", 24, 3600, "shanghai", "bachelor", "engineer",
+                      "2010-01-09")
+
+        query.add_row("bob", 27, 8600, None, "bachelor", "engineer",
+                      "1990-01-09")
+
+        query.add_row("edwin", 30, 10600, "beijing", "bachelor", "engineer",
+                      "1987-01-09")
+
+        query_str = str(query)
+        print(query_str)
+
+        expected = """
+           REPLACE INTO people
+           VALUES( "barry",19,3100,"shanghai","bachelor",null,"2010-01-01" ),
+           ( "jack",24,3600,"shanghai","bachelor","engineer","2010-01-09" ),
+           ( "bob",27,8600,null,"bachelor","engineer","1990-01-09" ),
+           ( "edwin",30,10600,"beijing","bachelor","engineer","1987-01-09" )
+
+           """
+        self.compare_sql(expected, query_str)
+
     def test_sql_update1(self):
         query = Update("people")
         query.put("name", "barry")
