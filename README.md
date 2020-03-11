@@ -35,6 +35,7 @@ you don't need take care of that if if the param is string, number or none ...
 
 
 ## Usage
+see more samples in tests/test_sqler.py
 ### Build Select SQL
 ```python
 from pysqler import *
