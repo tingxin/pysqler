@@ -379,7 +379,7 @@ class Update(Where):
 
     def __init__(self, table):
         super(Update, self).__init__()
-        self._cache = ["UPDATE {0} SET".format(table)]
+        self.table = table
         self._pairs = list()
 
     def put(self, key, value):
@@ -394,14 +394,16 @@ class Update(Where):
             return ""
 
         f = "{0} = {1}"
+
+        cache = ["UPDATE {0} SET".format(self.table)]
         values = [f.format(item[0], item[1]) for item in self._pairs]
-        self._cache.append(",".join(values))
+        cache.append(",".join(values))
 
         where = super(Where, self).__str__()
         if where:
-            self._cache.append(where)
+            cache.append(where)
 
-        return " ".join(self._cache)
+        return " ".join(cache)
 
 
 class Delete(Where):
