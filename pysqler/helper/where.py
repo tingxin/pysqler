@@ -5,21 +5,22 @@
 #
 # Created: 2019/2/24
 
+from . import ValueType
 from . import filter
 
 
 class Where(filter.Filter):
     def __init__(self):
         super(Where, self).__init__("WHERE")
-
-    def where(self, key, operator, value):
-        self.add(key, operator, value)
+    
+    def where(self, key, operator, value, value_type=ValueType.Auto):
+        self.add(key, operator, value, value_type)
         return self
-
-    def and_where(self, key, operator, value):
-        self.add(key, operator, value)
+    
+    def and_where(self, key, operator, value, value_type=ValueType.Auto):
+        self.add(key, operator, value, value_type)
         return self
-
-    def or_where(self, key, operator, value):
-        self.add_or(key, operator, value)
+    
+    def or_where(self, key, operator, value, value_type=ValueType.Auto):
+        self.add_or(key, operator, value, value_type)
         return self

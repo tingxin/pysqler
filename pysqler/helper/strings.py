@@ -7,8 +7,10 @@
 
 
 import re
-from datetime import datetime
 from datetime import date
+from datetime import datetime
+
+from .common import ValueType
 
 str_rep = dict()
 operators = dict()
@@ -61,35 +63,53 @@ def replace(str_content, rep):
 def filter_sql(sql):
     if sql == "":
         return sql
-
+    
     sql = replace(sql, str_rep)
     return sql
 
 
-def get_sql_str(v):
+def get_sql_str(v, value_type=ValueType.Auto):
     if v is None:
-        part = "null"
-    elif isinstance(v, str):
+        return "null"
+    
+    if value_type == ValueType.Auto:
+        if isinstance(v, str):
+            part = filter_sql(v)
+            part = "\'{0}\'".format(part)
+        elif isinstance(v, int) or isinstance(v, float):
+            part = str(v)
+        elif isinstance(v, datetime) or isinstance(v, date):
+            part = "\'{0}\'".format(v)
+        elif isinstance(v, tuple):
+            return handel_tuple(v)
+        elif isinstance(v, list):
+            t = tuple(v)
+            return handel_tuple(t)
+        else:
+            part = str(v)
+    
+    elif value_type == ValueType.String:
         part = filter_sql(v)
-        part = "\"{0}\"".format(part)
-    elif isinstance(v, int) or isinstance(v, float):
+        part = "\'{0}\'".format(part)
+    elif value_type == ValueType.Number:
         part = str(v)
-    elif isinstance(v, datetime) or isinstance(v, date):
-        part = "\"{0}\"".format(v)
-    elif isinstance(v, tuple):
-        return handel_tuple(v)
-    elif isinstance(v, list):
+    elif value_type == ValueType.Date:
+        part = "\'{0}\'".format(v)
+    elif value_type == ValueType.List:
         t = tuple(v)
         return handel_tuple(t)
+    elif value_type == ValueType.Tuple:
+        return handel_tuple(v)
     else:
         part = str(v)
+    
     return part
 
 
 def get_sql_operator(operator, v):
     if operator not in operators:
         raise ValueError("PySqler does not support operator {0}", operator)
-
+    
     if v is None:
         if operator == "=":
             return "IS"
